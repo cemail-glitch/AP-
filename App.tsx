@@ -15,7 +15,30 @@ import {
   Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { getAiDiagnosisSimulation } from './services/geminiService';
+// 本地演示模式：直接返回模拟结果，无需真实网络请求
+const getAiDiagnosisSimulation = async (data: DiagnosisData, lang: 'en' | 'zh'): Promise<DiagnosisResult> => {
+  // 模拟网络延迟
+  await new Promise(resolve => setTimeout(resolve, 1500));
+
+  // 根据输入简单计算置信度
+  const crp = Number(data.crp) || 0;
+  const wbc = Number(data.whiteCell) || 0;
+  const pain = Number(data.painLevel) || 0;
+  const confidence = Math.min(99, 60 + crp * 0.08 + wbc * 1.2 + pain * 1.5);
+
+  // 返回模拟结果
+  return {
+    // 由于 DiagnosisResult 类型中无 confidence 字段，故移除该属性
+    // confidence: Math.round(confidence),
+    resultText: lang === 'zh'
+      ? '急性胰腺炎（中度）可能性高。'
+      : 'High probability of acute pancreatitis (moderate).',
+    severity: 'Moderate',
+    actions: lang === 'zh'
+      ? ['严密监测生命体征', '积极液体复苏', '考虑ICU收治', '24h复查实验室指标']
+      : ['Monitor vitals closely', 'Aggressive fluid resuscitation', 'Consider ICU admission', 'Repeat labs in 24h']
+  };
+};
 import { DiagnosisData, DiagnosisResult } from './types';
 
 // --- Translations ---
@@ -403,7 +426,6 @@ const App = () => {
           <div className="flex flex-col lg:flex-row space-y-12 lg:space-y-0 mt-16">
             {t.workflow.steps.map((step, i) => (
               <WorkflowStep 
-                key={i}
                 number={i+1} 
                 title={step.title} 
                 description={step.desc} 
